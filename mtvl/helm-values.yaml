@@ -1,0 +1,72 @@
+fullnameOverride: mtvl
+
+replicaCount: 1
+
+image:
+  repository: mylists/mtvl
+  tag: "1.5.36"
+  pullPolicy: IfNotPresent
+
+containerPort: 8080
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: true
+  className: nginx
+  hosts:
+    - host: "api.{{ args.domain }}"
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+livenessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 10
+  periodSeconds: 20
+
+readinessProbe:
+  httpGet:
+    path: /health
+    port: http
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 65534
+  runAsGroup: 65534
+  fsGroup: 65534
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+env:
+  SERVER_PORT: "8080"
+  DB_DRIVER: postgres
+  AUTH_PROVIDER: jwt
+  CORS_ALLOWED_ORIGINS: "https://{{ args.domain }}"
+
+# Expect a Secret named mtvl with keys DB_DSN and JWT_SECRET
+envFrom:
+  - secretRef:
+      name: mtvl

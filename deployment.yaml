@@ -1,0 +1,13 @@
+deployments:
+  - path: namespaces
+  - barrier: true
+    message: "Waiting for namespace to be created"
+  - path: mtvl
+    overrideNamespace: "{{ args.namespace }}"
+    waitReadiness: true
+  - path: mtvl-frontend
+    overrideNamespace: "{{ args.namespace }}"
+
+commonLabels:
+  app.kubernetes.io/part-of: mtvl
+  mylists.io/target: "{{ target.name }}"

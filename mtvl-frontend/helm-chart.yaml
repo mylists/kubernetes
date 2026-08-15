@@ -1,0 +1,5 @@
+helmChart:
+  path: ../charts/common
+  releaseName: mtvl-frontend
+  namespace: "{{ args.namespace }}"
+  output: helm-rendered.yaml
