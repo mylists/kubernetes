@@ -1,0 +1,7 @@
+discriminator: "mylists-{{ target.name }}"
+
+args:
+  - name: namespace
+    default: mtvl
+  - name: domain
+    default: mylists.cc
