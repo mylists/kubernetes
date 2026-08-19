@@ -1,4 +1,4 @@
-discriminator: "mylists-{{ target.name }}"
+discriminator: "mylists-kluctl"
 
 args:
   - name: namespace
