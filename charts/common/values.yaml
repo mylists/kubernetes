@@ -46,6 +46,23 @@ traefik:
   redirectToHTTPS: false
   tls: {}
 
+# Optional cert-manager Certificate. When enabled, the issued secret is
+# wired into Ingress / IngressRoute unless those already set a secretName.
+certificate:
+  enabled: false
+  name: ""
+  secretName: ""
+  annotations: {}
+  issuerRef:
+    name: ""
+    kind: ClusterIssuer
+  # Defaults to hosts from ingress.hosts
+  dnsNames: []
+  commonName: ""
+  duration: ""
+  renewBefore: ""
+  usages: []
+
 resources: {}
 
 livenessProbe:

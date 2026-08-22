@@ -15,3 +15,5 @@ kubernetes cluster.
 1. make deploy
 
 To route with Traefik IngressRoutes instead of Kubernetes Ingress, set `ingress.provider: traefik` in `klu/vars.yaml`.
+
+To issue a TLS cert with cert-manager, set `certificate.enabled: true` and `certificate.issuerRef.name` in helm values. `dnsNames` default to `ingress.hosts`, and the issued secret is attached to Ingress or IngressRoute unless those already set a `secretName`.

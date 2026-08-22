@@ -1,3 +1,7 @@
 ingress:
+  enabled: true
   # nginx | traefik
   provider: nginx
+
+certificate:
+  enabled: false

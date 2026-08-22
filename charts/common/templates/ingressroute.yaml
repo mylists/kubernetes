@@ -8,8 +8,11 @@
 {{- $entryPoints := .Values.traefik.entryPoints | default (list "websecure") -}}
 {{- $middlewares := .Values.traefik.middlewares | default list -}}
 {{- $tls := .Values.traefik.tls | default dict -}}
-{{- if and (not $tls.secretName) .Values.ingress.tls }}
-{{- $tls = merge (dict "secretName" (index .Values.ingress.tls 0).secretName) $tls -}}
+{{- if not $tls.secretName }}
+{{- $tlsSecret := include "common.tls.secretName" . | trim -}}
+{{- if $tlsSecret }}
+{{- $tls = merge (dict "secretName" $tlsSecret) $tls -}}
+{{- end }}
 {{- end }}
 {{- if .Values.traefik.redirectToHTTPS }}
 apiVersion: {{ $apiVersion }}

@@ -24,6 +24,10 @@ ingress:
           pathType: Prefix
   tls: []
 
+certificate:
+  enabled: "{{ certificate.enabled }}"
+  issuerRef: {{ certificate.issuerRef }}
+
 livenessProbe:
   httpGet:
     path: /healthz

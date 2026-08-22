@@ -78,6 +78,70 @@ true
 {{- end }}
 
 {{/*
+True when a cert-manager Certificate should be rendered.
+*/}}
+{{- define "common.certificate.enabled" -}}
+{{- if .Values.certificate.enabled }}
+true
+{{- end }}
+{{- end }}
+
+{{/*
+Certificate resource name.
+*/}}
+{{- define "common.certificate.name" -}}
+{{- default (include "common.fullname" .) .Values.certificate.name }}
+{{- end }}
+
+{{/*
+TLS secret name issued by the Certificate.
+*/}}
+{{- define "common.certificate.secretName" -}}
+{{- default (printf "%s-tls" (include "common.fullname" .)) .Values.certificate.secretName }}
+{{- end }}
+
+{{/*
+DNS names for the Certificate. Uses certificate.dnsNames, else ingress.hosts.
+*/}}
+{{- define "common.certificate.dnsNames" -}}
+{{- $names := .Values.certificate.dnsNames | default list -}}
+{{- if not $names }}
+{{- range .Values.ingress.hosts }}
+{{- $names = append $names .host }}
+{{- end }}
+{{- end }}
+{{- range $names }}
+- {{ . | quote }}
+{{- end }}
+{{- end }}
+
+{{/*
+Ingress TLS list. Uses ingress.tls, else the cert-manager secret covering certificate DNS names.
+*/}}
+{{- define "common.ingress.tls" -}}
+{{- if .Values.ingress.tls }}
+{{- toYaml .Values.ingress.tls }}
+{{- else if .Values.certificate.enabled }}
+- hosts:
+    {{- include "common.certificate.dnsNames" . | nindent 4 }}
+  secretName: {{ include "common.certificate.secretName" . }}
+{{- end }}
+{{- end }}
+
+{{/*
+Primary TLS secret for Traefik: traefik.tls.secretName, else ingress.tls, else the Certificate secret.
+*/}}
+{{- define "common.tls.secretName" -}}
+{{- if and .Values.traefik .Values.traefik.tls .Values.traefik.tls.secretName }}
+{{- .Values.traefik.tls.secretName }}
+{{- else if .Values.ingress.tls }}
+{{- (index .Values.ingress.tls 0).secretName }}
+{{- else if .Values.certificate.enabled }}
+{{- include "common.certificate.secretName" . }}
+{{- end }}
+{{- end }}
+
+{{/*
 Build a Traefik router match from host + path + pathType.
 */}}
 {{- define "common.traefikMatch" -}}

@@ -1,0 +1,49 @@
+{{- if eq (include "common.certificate.enabled" . | trim) "true" -}}
+{{- if not .Values.certificate.issuerRef.name }}
+{{- fail "certificate.issuerRef.name is required when certificate.enabled is true" }}
+{{- end }}
+{{- $dnsNames := include "common.certificate.dnsNames" . | trim -}}
+{{- if or (eq $dnsNames "") (eq $dnsNames "[]") (eq $dnsNames "null") }}
+{{- fail "certificate.dnsNames or ingress.hosts is required when certificate.enabled is true" }}
+{{- end }}
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ include "common.certificate.name" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  {{- with .Values.certificate.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  secretName: {{ include "common.certificate.secretName" . }}
+  issuerRef:
+    name: {{ .Values.certificate.issuerRef.name }}
+    kind: {{ .Values.certificate.issuerRef.kind | default "ClusterIssuer" }}
+    {{- with .Values.certificate.issuerRef.group }}
+    group: {{ . }}
+    {{- end }}
+  dnsNames:
+    {{- $dnsNames | nindent 4 }}
+  {{- with .Values.certificate.commonName }}
+  commonName: {{ . }}
+  {{- end }}
+  {{- with .Values.certificate.duration }}
+  duration: {{ . }}
+  {{- end }}
+  {{- with .Values.certificate.renewBefore }}
+  renewBefore: {{ . }}
+  {{- end }}
+  {{- with .Values.certificate.usages }}
+  usages:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  {{- if and (hasKey .Values.certificate "privateKey") .Values.certificate.privateKey }}
+  privateKey:
+    {{- toYaml .Values.certificate.privateKey | nindent 4 }}
+  {{- end }}
+  {{- if and (hasKey .Values.certificate "extraSpec") .Values.certificate.extraSpec }}
+  {{- toYaml .Values.certificate.extraSpec | nindent 2 }}
+  {{- end }}
+{{- end }}
