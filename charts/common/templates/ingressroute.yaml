@@ -1,0 +1,99 @@
+{{- if eq (include "common.traefik.enabled" . | trim) "true" -}}
+{{- if not .Values.ingress.hosts }}
+{{- fail "ingress.hosts is required when ingress.provider is traefik" }}
+{{- end }}
+{{- $fullName := include "common.fullname" . -}}
+{{- $svcPort := .Values.service.port -}}
+{{- $apiVersion := .Values.traefik.apiVersion | default "traefik.io/v1alpha1" -}}
+{{- $entryPoints := .Values.traefik.entryPoints | default (list "websecure") -}}
+{{- $middlewares := .Values.traefik.middlewares | default list -}}
+{{- $tls := .Values.traefik.tls | default dict -}}
+{{- if and (not $tls.secretName) .Values.ingress.tls }}
+{{- $tls = merge (dict "secretName" (index .Values.ingress.tls 0).secretName) $tls -}}
+{{- end }}
+{{- if .Values.traefik.redirectToHTTPS }}
+apiVersion: {{ $apiVersion }}
+kind: Middleware
+metadata:
+  name: {{ $fullName }}-redirect-https
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+spec:
+  redirectScheme:
+    scheme: https
+    permanent: true
+---
+apiVersion: {{ $apiVersion }}
+kind: IngressRoute
+metadata:
+  name: {{ $fullName }}-http
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  {{- with .Values.traefik.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  entryPoints:
+    - web
+  routes:
+    {{- range .Values.ingress.hosts }}
+    {{- $host := .host }}
+    {{- range .paths }}
+    - match: {{ include "common.traefikMatch" (dict "host" $host "path" .path "pathType" .pathType) | trim | quote }}
+      kind: Rule
+      middlewares:
+        - name: {{ $fullName }}-redirect-https
+      services:
+        - name: {{ $fullName }}
+          port: {{ $svcPort }}
+    {{- end }}
+    {{- end }}
+---
+{{- end }}
+apiVersion: {{ $apiVersion }}
+kind: IngressRoute
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  {{- with .Values.traefik.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  entryPoints:
+    {{- toYaml $entryPoints | nindent 4 }}
+  routes:
+    {{- range .Values.ingress.hosts }}
+    {{- $host := .host }}
+    {{- range .paths }}
+    - match: {{ include "common.traefikMatch" (dict "host" $host "path" .path "pathType" .pathType) | trim | quote }}
+      kind: Rule
+      {{- if $middlewares }}
+      middlewares:
+        {{- toYaml $middlewares | nindent 8 }}
+      {{- end }}
+      services:
+        - name: {{ $fullName }}
+          port: {{ $svcPort }}
+    {{- end }}
+    {{- end }}
+  {{- if or $tls.secretName $tls.certResolver $tls.domains $tls.options }}
+  tls:
+    {{- if $tls.secretName }}
+    secretName: {{ $tls.secretName }}
+    {{- end }}
+    {{- if $tls.certResolver }}
+    certResolver: {{ $tls.certResolver }}
+    {{- end }}
+    {{- with $tls.domains }}
+    domains:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+    {{- with $tls.options }}
+    options:
+      {{- toYaml . | nindent 6 }}
+    {{- end }}
+  {{- end }}
+{{- end }}

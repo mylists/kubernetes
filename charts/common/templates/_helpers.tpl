@@ -58,3 +58,37 @@ Create the name of the service account to use
 {{- default "default" .Values.serviceAccount.name }}
 {{- end }}
 {{- end }}
+
+{{/*
+True when standard Kubernetes Ingress should be rendered.
+*/}}
+{{- define "common.ingress.enabled" -}}
+{{- if and .Values.ingress.enabled (ne (.Values.ingress.provider | default "nginx") "traefik") }}
+true
+{{- end }}
+{{- end }}
+
+{{/*
+True when Traefik IngressRoute should be rendered.
+*/}}
+{{- define "common.traefik.enabled" -}}
+{{- if and .Values.ingress.enabled (eq (.Values.ingress.provider | default "nginx") "traefik") }}
+true
+{{- end }}
+{{- end }}
+
+{{/*
+Build a Traefik router match from host + path + pathType.
+*/}}
+{{- define "common.traefikMatch" -}}
+{{- $host := .host -}}
+{{- $path := default "/" .path -}}
+{{- $pathType := default "Prefix" .pathType -}}
+{{- if or (eq $path "/") (eq $path "") }}
+Host(`{{ $host }}`)
+{{- else if eq $pathType "Exact" }}
+Host(`{{ $host }}`) && Path(`{{ $path }}`)
+{{- else }}
+Host(`{{ $host }}`) && PathPrefix(`{{ $path }}`)
+{{- end }}
+{{- end }}

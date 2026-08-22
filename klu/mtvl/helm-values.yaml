@@ -15,6 +15,7 @@ service:
 
 ingress:
   enabled: true
+  provider: "{{ ingress.provider }}"
   className: nginx
   hosts:
     - host: "api.{{ args.domain }}"

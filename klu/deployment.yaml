@@ -1,3 +1,6 @@
+vars:
+  - file: vars.yaml
+
 deployments:
   - path: mtvl
     waitReadiness: true

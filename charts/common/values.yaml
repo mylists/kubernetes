@@ -30,10 +30,21 @@ service:
 
 ingress:
   enabled: false
+  # nginx | traefik
+  provider: nginx
   className: ""
   annotations: {}
   hosts: []
   tls: []
+
+traefik:
+  apiVersion: traefik.io/v1alpha1
+  annotations: {}
+  entryPoints:
+    - websecure
+  middlewares: []
+  redirectToHTTPS: false
+  tls: {}
 
 resources: {}
 
