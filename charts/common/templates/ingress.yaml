@@ -5,9 +5,17 @@ metadata:
   name: {{ include "common.fullname" . }}
   labels:
     {{- include "common.labels" . | nindent 4 }}
-  {{- with .Values.ingress.annotations }}
+  {{- $annotations := dict }}
+  {{- if eq (include "common.redirectToHTTPS" . | trim) "true" }}
+  {{- $_ := set $annotations "nginx.ingress.kubernetes.io/ssl-redirect" "true" }}
+  {{- $_ := set $annotations "nginx.ingress.kubernetes.io/force-ssl-redirect" "true" }}
+  {{- end }}
+  {{- range $k, $v := .Values.ingress.annotations }}
+  {{- $_ := set $annotations $k $v }}
+  {{- end }}
+  {{- if $annotations }}
   annotations:
-    {{- toYaml . | nindent 4 }}
+    {{- toYaml $annotations | nindent 4 }}
   {{- end }}
 spec:
   {{- with .Values.ingress.className }}

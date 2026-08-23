@@ -1,0 +1,82 @@
+{{- if eq (include "common.gateway.enabled" . | trim) "true" -}}
+{{- if not .Values.ingress.hosts }}
+{{- fail "ingress.hosts is required when ingress.provider is gateway" }}
+{{- end }}
+{{- $parentRefs := include "common.gateway.parentRefs" . | trim }}
+{{- if not $parentRefs }}
+{{- fail "gateway.parentRefs is required when ingress.provider is gateway (or set gateway.create: true)" }}
+{{- end }}
+{{- $fullName := include "common.fullname" . -}}
+{{- $svcPort := .Values.service.port -}}
+{{- $apiVersion := include "common.gateway.apiVersion" . -}}
+{{- $hosts := .Values.ingress.hosts -}}
+{{- $multi := gt (len $hosts) 1 }}
+{{- range $i, $host := $hosts }}
+{{- if $i }}
+---
+{{- end }}
+{{- $routeName := $fullName }}
+{{- if $multi }}
+{{- $routeName = (printf "%s-%s" $fullName (include "common.gateway.hostName" $host.host) | trunc 63 | trimSuffix "-") }}
+{{- end }}
+apiVersion: {{ $apiVersion }}
+kind: HTTPRoute
+metadata:
+  name: {{ $routeName }}
+  labels:
+    {{- include "common.labels" $ | nindent 4 }}
+  {{- with $.Values.gateway.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    {{- $parentRefs | nindent 4 }}
+  hostnames:
+    - {{ $host.host | quote }}
+  rules:
+    {{- range $host.paths }}
+    - matches:
+        - path:
+            type: {{ include "common.gateway.pathType" .pathType | trim }}
+            value: {{ .path | default "/" | quote }}
+      backendRefs:
+        - name: {{ $fullName }}
+          port: {{ $svcPort }}
+    {{- end }}
+{{- end }}
+{{- if eq (include "common.redirectToHTTPS" . | trim) "true" }}
+{{- $httpParents := include "common.gateway.httpParentRefs" . | trim }}
+{{- if not $httpParents }}
+{{- fail "gateway.httpParentRefs is required when redirectToHTTPS is true (or set gateway.create: true)" }}
+{{- end }}
+{{- range $hosts }}
+---
+{{- $routeName := (printf "%s-redirect" $fullName | trunc 63 | trimSuffix "-") }}
+{{- if $multi }}
+{{- $routeName = (printf "%s-%s-redirect" $fullName (include "common.gateway.hostName" .host) | trunc 63 | trimSuffix "-") }}
+{{- end }}
+apiVersion: {{ $apiVersion }}
+kind: HTTPRoute
+metadata:
+  name: {{ $routeName }}
+  labels:
+    {{- include "common.labels" $ | nindent 4 }}
+  {{- with $.Values.gateway.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  parentRefs:
+    {{- $httpParents | nindent 4 }}
+  hostnames:
+    - {{ .host | quote }}
+  rules:
+    - filters:
+        - type: RequestRedirect
+          requestRedirect:
+            scheme: https
+            statusCode: 301
+{{- end }}
+{{- end }}
+{{- end }}

@@ -1,0 +1,47 @@
+{{- if and (eq (include "common.gateway.enabled" . | trim) "true") .Values.gateway.create -}}
+{{- if not .Values.gateway.gatewayClassName }}
+{{- fail "gateway.gatewayClassName is required when gateway.create is true" }}
+{{- end }}
+{{- $apiVersion := include "common.gateway.apiVersion" . -}}
+{{- $tlsSecret := include "common.tls.secretName" . | trim -}}
+{{- $tlsMode := "Terminate" -}}
+{{- if and .Values.gateway.tls .Values.gateway.tls.mode }}
+{{- $tlsMode = .Values.gateway.tls.mode -}}
+{{- end }}
+apiVersion: {{ $apiVersion }}
+kind: Gateway
+metadata:
+  name: {{ include "common.gateway.name" . }}
+  labels:
+    {{- include "common.labels" . | nindent 4 }}
+  {{- with .Values.gateway.gatewayAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  gatewayClassName: {{ .Values.gateway.gatewayClassName }}
+  listeners:
+    {{- if .Values.gateway.listeners }}
+    {{- toYaml .Values.gateway.listeners | nindent 4 }}
+    {{- else }}
+    - name: http
+      protocol: HTTP
+      port: 80
+      allowedRoutes:
+        namespaces:
+          from: Same
+    {{- if $tlsSecret }}
+    - name: https
+      protocol: HTTPS
+      port: 443
+      tls:
+        mode: {{ $tlsMode }}
+        certificateRefs:
+          - name: {{ $tlsSecret }}
+            kind: Secret
+      allowedRoutes:
+        namespaces:
+          from: Same
+    {{- end }}
+    {{- end }}
+{{- end }}

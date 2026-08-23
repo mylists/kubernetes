@@ -14,7 +14,7 @@
 {{- $tls = merge (dict "secretName" $tlsSecret) $tls -}}
 {{- end }}
 {{- end }}
-{{- if .Values.traefik.redirectToHTTPS }}
+{{- if eq (include "common.redirectToHTTPS" . | trim) "true" }}
 apiVersion: {{ $apiVersion }}
 kind: Middleware
 metadata:

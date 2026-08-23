@@ -30,12 +30,14 @@ service:
 
 ingress:
   enabled: false
-  # nginx | traefik
+  # nginx | traefik | gateway
   provider: nginx
   className: ""
   annotations: {}
   hosts: []
   tls: []
+  # Redirect HTTP to HTTPS for nginx, Traefik, and Gateway
+  redirectToHTTPS: false
 
 traefik:
   apiVersion: traefik.io/v1alpha1
@@ -46,8 +48,32 @@ traefik:
   redirectToHTTPS: false
   tls: {}
 
+# Kubernetes Gateway API. Used when ingress.provider is gateway.
+# HTTPRoutes are built from ingress.hosts. Attach them to an existing
+# Gateway via parentRefs, or set create: true to render a Gateway here.
+gateway:
+  apiVersion: gateway.networking.k8s.io/v1
+  annotations: {}
+  # Required unless create is true.
+  parentRefs: []
+  # HTTP -> HTTPS redirect HTTPRoute (attaches to the HTTP listener)
+  redirectToHTTPS: false
+  # Parent refs for the redirect route. Defaults to parentRefs with
+  # sectionName: http, or the created Gateway's http listener.
+  httpParentRefs: []
+  # Create a Gateway in this release
+  create: false
+  name: ""
+  gatewayClassName: ""
+  gatewayAnnotations: {}
+  # If empty and create is true, listeners are generated (http / https)
+  listeners: []
+  tls:
+    secretName: ""
+    mode: Terminate
+
 # Optional cert-manager Certificate. When enabled, the issued secret is
-# wired into Ingress / IngressRoute unless those already set a secretName.
+# wired into Ingress / IngressRoute / Gateway unless those already set a secretName.
 certificate:
   enabled: false
   name: ""

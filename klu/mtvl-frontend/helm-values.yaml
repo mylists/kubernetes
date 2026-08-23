@@ -23,6 +23,10 @@ ingress:
         - path: /
           pathType: Prefix
   tls: []
+  redirectToHTTPS: true
+
+gateway:
+  parentRefs: {{ get_var("gateway.parentRefs", []) }}
 
 certificate:
   enabled: "{{ certificate.enabled }}"
