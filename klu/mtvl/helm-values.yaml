@@ -5,7 +5,6 @@ replicaCount: 1
 image:
   repository: mylists/mtvl
   tag: "latest"
-  pullPolicy: IfNotPresent
 
 containerPort: 8080
 

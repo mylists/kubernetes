@@ -2,8 +2,6 @@ ingress:
   enabled: true
   # nginx | traefik | gateway
   provider: nginx
-  # Redirect HTTP to HTTPS (also set on each app's helm values)
-  redirectToHTTPS: true
 
 # Used when ingress.provider is gateway. Required unless gateway.create is true.
 gateway:
@@ -14,3 +12,6 @@ gateway:
 
 certificate:
   enabled: false
+
+frontend:
+  api_url: https://api.example.com
