@@ -1,4 +1,4 @@
-fullnameOverride: mtvl
+fullnameOverride: mtvl-docs
 
 replicaCount: 1
 
@@ -54,16 +54,10 @@ resources:
     memory: 256Mi
 
 podSecurityContext:
-  runAsNonRoot: true
-  runAsUser: 65534
-  runAsGroup: 65534
-  fsGroup: 65534
+  runAsNonRoot: false
   seccompProfile:
     type: RuntimeDefault
 
 securityContext:
   allowPrivilegeEscalation: false
-  readOnlyRootFilesystem: true
-  capabilities:
-    drop:
-      - ALL
+  readOnlyRootFilesystem: false

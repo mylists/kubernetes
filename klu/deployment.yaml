@@ -10,5 +10,7 @@ deployments:
 
   - path: mtvl-frontend
 
+  - path: docs
+
 commonLabels:
   app.kubernetes.io/part-of: mtvl

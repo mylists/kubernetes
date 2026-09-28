@@ -5,4 +5,4 @@ KLU := kluctl
 all: deploy
 
 deploy:
-	$(KLU) deploy
+	$(KLU) deploy ${KLU_ARGS}
